@@ -1,5 +1,8 @@
 # AsmMacro.jl
 
+[![Build Status](https://travis-ci.org/YingboMa/AsmMacro.jl.svg?branch=master)](https://travis-ci.org/YingboMa/AsmMacro.jl)
+[![codecov](https://codecov.io/gh/YingboMa/AsmMacro.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/YingboMa/AsmMacro.jl)
+
 `AsmMacro.jl` provides a relatively simple way to write assembly code in Julia.
 
 ## Examples
