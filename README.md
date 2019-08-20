@@ -5,8 +5,10 @@
 ## Examples
 
 ```julia
+using AsmMacro
+
 # z[1:4] <- x[1:4] + y[1:4]
-@asm function add_vec2(x::Ptr{Float64},y::Ptr{Float64},z::Ptr{Float64})
+@asm function add_avx256(x::Ptr{Float64},y::Ptr{Float64},z::Ptr{Float64})
     vmovupd(x[0], ymm0)
     vmovupd(y[0], ymm1)
     vaddpd(ymm0, ymm1, ymm1)
@@ -16,7 +18,7 @@ end
 x = [1.0,2.0,3.0,4.0]
 y = [4.0,3.0,2.0,1.0]
 z = similar(x)
-add_vec2(pointer(x),pointer(y),pointer(z))
+add_avx256(pointer(x),pointer(y),pointer(z))
 
 julia> z
 4-element Array{Float64,1}:
@@ -28,8 +30,10 @@ julia> z
 
 
 ```julia
+using AsmMacro
+
 # z[1:2] <- x[1:2]*n (with a loop)
-@asm function add_loop_vec2(x::Ptr{Float64},n::Int,z::Ptr{Float64})
+@asm function add_loop_sse(x::Ptr{Float64},n::Int,z::Ptr{Float64})
     movq(n, rcx)
     movapd(x[0], xmm0)
     xorpd(xmm1,xmm1)
@@ -43,7 +47,7 @@ end
 x = [1.0,2.0]
 n = 10
 z = similar(x)
-add_loop_vec2(pointer(x),n,pointer(z))
+add_loop_sse(pointer(x),n,pointer(z))
 
 julia> z
 2-element Array{Float64,1}:
