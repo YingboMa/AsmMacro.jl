@@ -17,4 +17,28 @@ using AsmMacro, Test
     z = similar(x)
     add_loop_vec2(pointer(x),n,pointer(z))
     @test z == x*n
+
+    @asm function add(z::Ptr{Int64}, x::Int64, y::Int64)
+        addq(x, y)
+        movq(y, z[0])
+    end
+    z = Int64[100]
+    add(pointer(z), Int64(1), Int64(2))
+    @test z[1] == 3
+
+    @asm function add(z::Ptr{Int32}, x::Int32, y::Int32)
+        addl(x, y)
+        movl(y, z[0])
+    end
+    z = Int32[100]
+    add(pointer(z), Int32(1), Int32(2))
+    @test z[1] == 3
+
+    @asm function add(z::Ptr{Float64}, x::Float64, y::Float64)
+        vaddsd(xmm0, xmm1, xmm1)
+        movq(xmm1, z[0])
+    end
+    z = Float64[100]
+    add(pointer(z), Float64(1), Float64(2))
+    @test z[1] == 3.0
 end
