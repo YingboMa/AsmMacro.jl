@@ -19,6 +19,7 @@ end
 
 # TODO add more of those
 typ_to_llvm(::Type{Float64}) = "double"
+typ_to_llvm(::Type{Float32}) = "float"
 typ_to_llvm(::Type{Int32}) = "i32"
 typ_to_llvm(::Type{Int64}) = "i64"
 typ_to_llvm(::Type{Ptr{T}}) where {T} = typ_to_llvm(Int)

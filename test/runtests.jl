@@ -24,7 +24,7 @@ using AsmMacro, Test
     end
     z = Int64[100]
     add(pointer(z), Int64(1), Int64(2))
-    @test z[1] == 3
+    @test z[1] === Int64(3)
 
     @asm function add(z::Ptr{Int32}, x::Int32, y::Int32)
         addl(x, y)
@@ -32,7 +32,7 @@ using AsmMacro, Test
     end
     z = Int32[100]
     add(pointer(z), Int32(1), Int32(2))
-    @test z[1] == 3
+    @test z[1] === Int32(3)
 
     @asm function add(z::Ptr{Float64}, x::Float64, y::Float64)
         vaddsd(xmm0, xmm1, xmm1)
@@ -40,7 +40,15 @@ using AsmMacro, Test
     end
     z = Float64[100]
     add(pointer(z), Float64(1), Float64(2))
-    @test z[1] == 3.0
+    @test z[1] === Float64(3.0)
+
+    @asm function add(z::Ptr{Float32}, x::Float32, y::Float32)
+        vaddss(xmm0, xmm1, xmm1)
+        movq(xmm1, z[0])
+    end
+    z = Float32[100]
+    add(pointer(z), Float32(1), Float32(2))
+    @test z[1] === Float32(3.0)
 
     @test_throws Any (@eval @asm function add(x::Float64)
         ___
