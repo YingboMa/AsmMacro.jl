@@ -41,4 +41,8 @@ using AsmMacro, Test
     z = Float64[100]
     add(pointer(z), Float64(1), Float64(2))
     @test z[1] == 3.0
+
+    @test_throws Any (@eval @asm function add(x::Float64)
+        ___
+    end)
 end
