@@ -4,7 +4,9 @@ export @asm
 
 function gen_arg(args, arg::Expr)
     if arg.head === :ref
-        string(arg.args[2], "(", gen_arg(args, arg.args[1]), ")")
+        ii = arg.args[2]
+        ii′ = ii isa Number ? ii : eval(ii)
+        string(ii′, "(", gen_arg(args, arg.args[1]), ")")
     elseif arg.head === :macrocall
         string(".", string(arg.args[1])[2:end])
     else

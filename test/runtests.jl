@@ -1,21 +1,25 @@
 using AsmMacro, Test
 
 @testset "@asm" begin
-    @asm function add_loop_vec2(x::Ptr{Float64},n::Int,z::Ptr{Float64})
+    @asm function add_loop_vec4(x::Ptr{Float64},n::Int,z::Ptr{Float64})
         movq(n, rcx)
-        movapd(x[0], xmm0)
-        xorpd(xmm1,xmm1)
+        movapd(x[0*16], xmm0)
+        movapd(x[1*16], xmm1)
+        xorpd(xmm2,xmm2)
+        xorpd(xmm3,xmm3)
         @loop
-        addpd(xmm0,xmm1)
+        addpd(xmm0,xmm2)
+        addpd(xmm1,xmm3)
         dec(rcx)
         jnz(@loop)
-        movapd(xmm1, z[0])
+        movapd(xmm2, z[0*16])
+        movapd(xmm3, z[1*16])
     end
 
-    x = [1.0,2.0]
+    x = [1.0,2.0,3.0,4.0]
     n = 10
     z = similar(x)
-    add_loop_vec2(pointer(x),n,pointer(z))
+    add_loop_vec4(pointer(x),n,pointer(z))
     @test z == x*n
 
     @asm function add(z::Ptr{Int64}, x::Int64, y::Int64)
