@@ -1,4 +1,4 @@
-using AsmMacro, Test
+using AsmMacro, Test, InteractiveUtils
 
 @testset "@asm" begin
     @asm function add_loop_vec4(x::Ptr{Float64},n::Int,z::Ptr{Float64})
@@ -21,6 +21,7 @@ using AsmMacro, Test
     z = similar(x)
     add_loop_vec4(pointer(x),n,pointer(z))
     @test z == x*n
+    @test occursin("\${:uid}", sprint(code_llvm, add_loop_vec4, (Ptr{Float64}, Int, Ptr{Float64})))
 
     @asm function add(z::Ptr{Int64}, x::Int64, y::Int64)
         addq(x, y)
