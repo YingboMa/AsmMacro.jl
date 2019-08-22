@@ -57,4 +57,12 @@ using AsmMacro, Test
     @test_throws Any (@eval @asm function add(x::Float64)
         ___
     end)
+
+    @test_throws Any (@eval @asm function add(x::Float64)
+        x :: 1
+    end)
+
+    @test_throws Any (@eval @asm function add(x::Float64)
+                          foo(:: 1)
+    end)
 end
