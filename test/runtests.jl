@@ -66,4 +66,12 @@ using AsmMacro, Test, InteractiveUtils
     @test_throws Any (@eval @asm function add(x::Float64)
                           foo(:: 1)
     end)
+
+    @test_throws Any (@eval @asm function (x::Float64)
+                          foo(:: 1)
+    end)
+
+    @test_throws Any (@eval @asm function f(x)
+                          foo(:: 1)
+    end)
 end

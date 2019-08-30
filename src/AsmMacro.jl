@@ -1,24 +1,21 @@
 module AsmMacro
-
+using MLStyle
 export @asm
 
-genlabel(arg::Expr) = string(".", string(arg.args[1])[2:end], "\${:uid}")
+genlabel(sym::Symbol) = string(".", string(sym)[2:end], "\${:uid}")
 
-function genarg(args, arg::Expr)
-    if arg.head === :ref
-        ii = arg.args[2]
-        ii′ = ii isa Number ? ii : eval(ii)
-        string(ii′, "(", genarg(args, arg.args[1]), ")")
-    elseif arg.head === :macrocall
-        genlabel(arg)
-    else
-        error("?!! $arg")
-    end
-end
-function genarg(args, arg::Symbol)
-    idx = findfirst(isequal(arg), args)
-    idx === nothing && return string("%", arg)
-    "\$$(idx-1)"
+genarg(args, arg) = @match arg begin
+    :($value[$ii]) => begin
+            ii′ = ii isa Number ? ii : eval(ii)
+            string(ii′, "(", genarg(args, value), ")")
+        end
+    ::Symbol => begin
+            idx = findfirst(isequal(arg), args)
+            idx === nothing && return string("%", arg)
+            "\$$(idx-1)"
+        end
+    Expr(:macrocall, sym, ::LineNumberNode) => genlabel(sym)
+    _ => error("?!! $arg")
 end
 
 # TODO add more of those
@@ -34,32 +31,28 @@ function genasm(args, xs)
     io = IOBuffer()
     argnames = Symbol[]
     typs = []
-    for a in args
-        isa(a,Expr) && a.head === :(::) || error("invalid arg sig $a")
-        typ = eval(a.args[2])
-        push!(argnames,a.args[1])
-        push!(typs,typ)
-    end
-    println(io, "call void asm \"")
-    for ex in xs
-        isa(ex, LineNumberNode) && continue
-        isa(ex, Expr) && ex.head === :line && continue
-
-        if isa(ex,Expr)
-            if ex.head === :call
-                op = string(ex.args[1])
-                opargs = join(map(a -> genarg(argnames, a), ex.args[2:end]), ", ")
-                println(io, op, " ", opargs)
-            elseif ex.head === :macrocall
-                println(io, genlabel(ex), ":")
-            else
-                dump(ex)
-                error("unknown expr $ex")
+    for arg in args; @match arg begin
+        :($(argname :: Symbol) :: $typ) => begin
+                push!(argnames, argname)
+                push!(typs, eval(typ))
             end
-        else
-            error("??? $(typeof(ex))")
+        a => error("invalid arg sig $a")
+    end end
+    println(io, "call void asm \"")
+    for ex in xs; @match ex begin
+        ::LineNumberNode || Expr(:line, _...) => nothing
+        :($op($(opargs...))) => begin
+                str_opargs = join(map(a -> genarg(argnames, a), opargs), ", ")
+                println(io, op, " ", str_opargs)
+            end
+        Expr(:macrocall, sym, ::LineNumberNode) =>
+            println(io, genlabel(sym), ":")
+        ::Expr => begin
+            dump(ex)
+            error("unknown expr $ex")
         end
-    end
+        _ => error("??? $(typeof(ex))")
+    end end
     llvmtypes = map(typ2llvm, typs)
     for i = 1:length(llvmtypes)
         llvmtypes[i] = string(llvmtypes[i], " %", i-1)
@@ -73,13 +66,13 @@ function genasm(args, xs)
 end
 
 macro asm(f)
-    @assert f.head === :function
-    sig = f.args[1]
-    @assert sig.head === :call
-    body = f.args[2]
-    @assert body.head === :block
-    body.args = Any[genasm(sig.args[2:end], body.args)]
-    esc(f)
+    @match f begin
+        :(function $f($(args...)) $(body...) end) =>
+            :(function $f($(args...))
+                $(genasm(args, body))
+              end) |> esc
+        _ => error("invalid function form $f")
+    end
 end
 
 end # module
